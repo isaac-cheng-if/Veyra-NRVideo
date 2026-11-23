@@ -1,5 +1,4 @@
 #include "veyra/engine/VideoPresenter.h"
-
 #include "veyra/engine/DoviCurveAdapter.h" // custom: Dolby Vision level 1 -> curve
 #include "veyra/engine/PresentationGeometry.h"
 #include "veyra/pipeline/EnhanceGraph.h"
@@ -639,7 +638,6 @@ bool VideoPresenter::present(gfx::D3D12DeviceContext& ctx,gfx::CommandSlotRing& 
         if(stats.supported)veyra::log::info("display-stats",std::format("refreshHz={:.3f} presentCalls={} dxgiPresentCount={} refreshes={} presentRefreshDelta={} presentsAhead={} backend={} (DXGI GetFrameStatistics delta over ~1s. These counters CANNOT tell how many frames the panel actually showed: with vsync off and tearing allowed, dxgiPresentCount tracks completed Present calls, and both refresh counters just advance with the monitor. presentsAhead = submitted presents after the last shown one at the sample: the display queue under VSync; with Automatic Present(0,0) it includes frames a newer one replaces; -1 unavailable. Measuring scanout needs PresentMon. XeSS generated presents are provider-internal.)",sink_.displayRefreshHz(),stats.presents,stats.displayed,stats.refreshes,stats.displayedRefresh,stats.ahead,sink_.xess()?"XeSS":"DXGI"));
         else if(FAILED(stats.result))veyra::log::info("display-stats",std::format("unavailable hr=0x{:X} backend={}",unsigned(stats.result),sink_.xess()?"XeSS":"DXGI"));
         const auto scanout=displayStats?sink_.takeDisplayLatency():gfx::PresentSink::DisplayLatencySummary{};
-
         if(scanout.samples||scanout.compositionMode>=0)veyra::log::info("display-latency",std::format("presentToScanoutP50Ms={:.3f} presentToScanoutP95Ms={:.3f} presentToScanoutMaxMs={:.3f} samples={} replacedAtLeast={} compositionMode={} refreshHz={:.3f} (DXGI frame statistics: Present call to the vblank that showed it, VSync and Automatic DXGI presents; Automatic dates only frames named as shown; compositionMode 0 composed 1 overlay 2 none 3 failure -1 unknown; not a photon measurement)",scanout.p50Ms,scanout.p95Ms,scanout.maxMs,scanout.samples,scanout.replacedAtLeast,scanout.compositionMode,sink_.displayRefreshHz()));
         const auto& timing=sink_.lastPresentTiming();
         veyra::log::info("present-cost",std::format("generated={} totalMs={:.3f} recordSubmitMs={:.3f} slotWaitMs={:.3f} dxgiMs={:.3f} slow={} source={} epoch={} backend={} resized={} resizeMs={:.3f} beginMs={:.3f} commandsMs={:.3f} beforeMs={:.3f} presentCallMs={:.3f} bufferMs={:.3f} afterMs={:.3f} hr=0x{:X}",generated,
@@ -906,6 +904,5 @@ void VideoPresenter::applyHdrMetadata(pipeline::EnhanceGraph& graph,const HdrMet
         metadataAttempt_=now;
     }
 }
-
 
 }

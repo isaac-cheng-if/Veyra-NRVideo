@@ -340,7 +340,6 @@ class QmlPlayerBridge : public QObject {
     Q_PROPERTY(bool fgActive READ fgActive NOTIFY snapshotChanged)
     Q_PROPERTY(bool captureRecovering READ captureRecovering NOTIFY snapshotChanged)
     Q_PROPERTY(double captureFps READ captureFps NOTIFY snapshotChanged)
-
     Q_PROPERTY(double captureDropped READ captureDropped NOTIFY snapshotChanged)
     Q_PROPERTY(QString backendWarning READ backendWarning NOTIFY snapshotChanged)
 
@@ -973,7 +972,6 @@ public:
     bool fgActive() const;
     bool captureRecovering() const;
     double captureFps() const;
-
     double captureDropped() const;
     QString backendWarning() const;
 
