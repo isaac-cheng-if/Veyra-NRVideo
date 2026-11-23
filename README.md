@@ -1,5 +1,73 @@
 <div align="center">
 
+<img src="xcap/docs/cover.png" alt="XCAP: PS5 capture, RTX frame generation, HDR10, Dolby Atmos" width="720">
+
+# Veyra + XCAP：自研 FPGA 采集卡，PS5 画面在 PC 上补帧
+
+**PS5 Pro → 自研 PCIe HDMI 采集卡 → RTX 5090 AI 补帧（NVIDIA VFG）→ 4K 120 Hz HDR10 + 杜比全景声直通**
+
+*A custom FPGA HDMI capture card (PCIe, ~10 µs to host memory) wired into Veyra for real-time frame generation of console games, with HDR10 and Dolby Atmos passthrough.*
+
+</div>
+
+> 本分支 `xcap` 是 [Likely7/Veyra-NRVideo](https://github.com/Likely7/Veyra-NRVideo) 的 fork。仓库根目录仍是 Veyra（GPL-3.0），采集源的改动直接改在原位；采集卡工程（FPGA、固件、驱动、工具）在 [`xcap/`](xcap/)。原项目说明完整保留在本页下半部分。
+
+## 它做什么
+
+主机游戏常锁 30 fps。普通 USB 采集卡要 30–50 ms 才把画面送到电脑，再补帧就很难玩。这里换成自己做的 PCIe 采集卡：PS5 一帧的最后一个像素到达电脑内存平均约 10 µs，后面的时间几乎全部留给补帧。
+
+```mermaid
+flowchart LR
+  A[PS5 Pro<br/>HDMI 2.0 4K60 HDR] --> B[FPGA 采集卡<br/>约 0.001 ms]
+  B --> C[PCIe DMA 到内存<br/>约 0.02 ms]
+  C --> D[Veyra 去重与上传<br/>约 0.3 ms]
+  D --> E[等下一帧<br/>插帧固有]
+  E --> F[VFG 补帧<br/>RTX 5090]
+  F --> G[显卡 HDMI<br/>4K 120 Hz VRR]
+  G --> H[电视]
+  B -. 环出 .-> I[HDMI OUT 直连]
+```
+
+## 实测（RTX 5090，LG G5，PS5 Pro）
+
+| 场景 | 补帧 | 采集→提交 P95 | 提交→上屏 P95 | 比 PS5 直连多 |
+|---|---|---|---|---|
+| 60 fps 内容 | 2 倍 → 120 fps | 约 16 ms | 约 0.4 ms | 约 +12 ms |
+| 30 fps 游戏 | 4 倍 → 120 fps | 32.5–47 ms | 约 1.8 ms | 约 +31 ~ +45 ms |
+
+- 采集：4K60 v210，长时间 0 丢帧、0 CRC 错误；HDR10 元数据逐帧随画面送达。
+- 声音：7.1 PCM；Dolby Atmos（MAT/TrueHD、E-AC-3 JOC）独占直通，延迟跟随画面。
+- 30 fps 内容必须等下一帧到达才能插帧，约 25 ms 是这种方法固有的；表中的波动来自 Veyra 的呈现节奏，见 [`xcap/README.md`](xcap/README.md)。
+- 数字是作者这套设备上的测量，不同电视、游戏会不同。
+
+## 硬件
+
+| 部件 | 型号 |
+|---|---|
+| FPGA 板 | ALINX AXAU15（AMD Artix UltraScale+ xcau15p，PCIe Gen3 x4） |
+| HDMI 子卡 | RK-FH1159（FMC，HDMI 2.0 一入一出：TMDS181 / SN65DP159 / IDT 8T49N241） |
+| 显卡 | NVIDIA RTX 40/50 系列（VFG 需要光流硬件） |
+| 系统 | Windows 11 x64；驱动为测试签名，需关闭 Secure Boot 并开启 testsigning |
+
+## 上手步骤
+
+1. 用自己的 AMD HDMI 1.4/2.0 Subsystem 授权生成位流：`xcap/fpga/build/build_hdmi.tcl rk_fh1159`，写入板上 QSPI（`xcap/fpga/build/qspi.tcl`）。仓库不含位流。
+2. 编译并签名驱动（`xcap/driver/build.bat`、`sign.bat`，证书需自建），安装后用 `xcap_test info` / `xcap_test hdmi` 检查。
+3. PS5：关闭 HDCP（设置 → 系统 → HDMI），HDR 设为始终开启。
+4. 按 Veyra 原说明编译本分支，运行 `veyra_qml_ui.exe --xcap hdmi,120,2 --fullscreen`（目标 120 fps，VFG 质量 2）。
+
+详细说明、寄存器与数据格式、测试命令：[`xcap/README.md`](xcap/README.md)；完整部署记录：[`xcap/到货步骤.md`](xcap/到货步骤.md)。
+
+## 许可
+
+Veyra 及本分支对它的修改为 GPL-3.0。`xcap/` 下的代码随本仓库以 GPL-3.0 发布；第三方文件的来源见各目录说明（如 [`xcap/fpga/hdmi/fw/THIRD_PARTY.md`](xcap/fpga/hdmi/fw/THIRD_PARTY.md)）。
+
+---
+
+# 以下为 Veyra 原项目说明 / Original Veyra README
+
+<div align="center">
+
 <img src="assets/veyra-wordmark-sun.gif" alt="Veyra NR · transparent animated wordmark and sun" width="480">
 
 # Veyra
