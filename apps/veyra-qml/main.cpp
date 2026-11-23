@@ -21,6 +21,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QSGRendererInterface>
 #include <QKeyEvent>
 #include <QTimer>
@@ -845,6 +846,8 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
     const QStringList args = QCoreApplication::arguments();
     QString openPath;
     QVariantMap testOptions;
+    bool xcapStart = false;
+    QString screenName;
     if (updateProbe) testOptions.insert(QStringLiteral("portableUpdateProbe"), true);
     if(qEnvironmentVariableIsSet("VEYRA_TEST_DISABLE_PAUSED_UI_IDLE"))
         testOptions.insert(QStringLiteral("disablePausedUiIdle"),true);
@@ -898,6 +901,18 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
                 return 2;
             }
             g_videoHiddenByProbe = g_videoProbe == VideoProbeMode::Hidden;
+        } else if (a == QLatin1String("--xcap") && hasValue) {
+            // --xcap hdmi|pattern[,fps[,VFG quality 0-5]]: open the XCAP card as soon as it has a signal
+            const QStringList v = args.at(++i).split(QLatin1Char(','));
+            const bool pattern = v.value(0) == QLatin1String("pattern");
+            const double fps = v.value(1).toDouble();
+            const int quality = v.size() > 2 ? v.value(2).toInt() : -1;
+            xcapStart = true;
+            QTimer::singleShot(600, &bridge, [&bridge, pattern, fps, quality] { bridge.openXcap(pattern, fps, quality); });
+        } else if (a == QLatin1String("--screen") && hasValue) {
+            screenName = args.at(++i);
+        } else if (a == QLatin1String("--fullscreen")) {
+            testOptions.insert(QStringLiteral("autoFullscreen"), true);
         } else if (a == QLatin1String("--reduced-motion")) {
             testOptions.insert(QStringLiteral("reducedMotion"), true);
         } else if (a == QLatin1String("--slow-animations") && hasValue) {
@@ -968,7 +983,7 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
     engine.rootContext()->setContextProperty(QStringLiteral("vyTest"), testOptions);
     if (!openPath.isEmpty() && !updateProbe) {
         QTimer::singleShot(600, &bridge, [&bridge, openPath] { bridge.openPath(openPath); });
-    } else if (!updateProbe) {
+    } else if (!updateProbe && !xcapStart) {
         QTimer::singleShot(600, &bridge, [&bridge] { bridge.autoResumeLastSource(); });
     }
 
@@ -985,6 +1000,13 @@ static int runApplication(int argc, char** argv, QString& restartProgram, QStrin
         return 1;
     }
     if (testSize.isValid()) window->resize(testSize);
+    if (!screenName.isEmpty())
+        for (QScreen* screen : QGuiApplication::screens()) {
+            veyra::log::info("qml-window", "screen " + screen->name().toStdString() + " / " + screen->model().toStdString());
+            if (!screen->name().contains(screenName) && !screen->model().contains(screenName)) continue;
+            window->setScreen(screen);
+            window->setPosition(screen->geometry().center() - QPoint(window->width() / 2, window->height() / 2));
+        }
     bridge.attachMainWindow(static_cast<qulonglong>(window->winId()));
 
     // Fullscreen must own the whole monitor. Without telling the shell, the taskbar

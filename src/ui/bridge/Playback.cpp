@@ -1,5 +1,6 @@
 // QML bridge: Playback responsibilities.
 #include "../QmlPlayerBridge_p.h"
+
 #include "../LiveTranslation.h"
 
 #include <regex>
@@ -165,6 +166,7 @@ bool QmlPlayerBridge::srActive() const { return impl_->snapshot.srActive; }
 bool QmlPlayerBridge::fgActive() const { return impl_->snapshot.fgActive; }
 bool QmlPlayerBridge::captureRecovering() const { return impl_->snapshot.captureRecovering; }
 double QmlPlayerBridge::captureFps() const { return impl_->snapshot.captureFps; }
+
 double QmlPlayerBridge::captureDropped() const { return double(impl_->snapshot.captureDropped); }
 QString QmlPlayerBridge::backendWarning() const { return uiText(impl_->snapshot.backendWarning); }
 

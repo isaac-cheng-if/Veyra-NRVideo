@@ -340,6 +340,7 @@ class QmlPlayerBridge : public QObject {
     Q_PROPERTY(bool fgActive READ fgActive NOTIFY snapshotChanged)
     Q_PROPERTY(bool captureRecovering READ captureRecovering NOTIFY snapshotChanged)
     Q_PROPERTY(double captureFps READ captureFps NOTIFY snapshotChanged)
+
     Q_PROPERTY(double captureDropped READ captureDropped NOTIFY snapshotChanged)
     Q_PROPERTY(QString backendWarning READ backendWarning NOTIFY snapshotChanged)
 
@@ -972,6 +973,7 @@ public:
     bool fgActive() const;
     bool captureRecovering() const;
     double captureFps() const;
+
     double captureDropped() const;
     QString backendWarning() const;
 
@@ -1262,6 +1264,9 @@ public:
     Q_INVOKABLE void setCompareSplitAt(double hostFractionX);
     Q_INVOKABLE void resumeLastSource();
     void autoResumeLastSource();
+    // --xcap: waits for the console's signal, opens the XCAP card and sets frame generation up for targetFps
+    // (0 = the display's refresh rate) the first time.
+    void openXcap(bool pattern, double targetFps, int vfgQuality = -1);
     // List mode: an NR layer's model and residual back to their defaults.
     Q_INVOKABLE bool resetNrLayer(int index);
     QVariantList protectionRegions() const;
