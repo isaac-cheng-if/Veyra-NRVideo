@@ -3133,7 +3133,10 @@ void EngineController::run(HWND window,std::wstring path,PlayerOptions options,s
                         // Keep the smoother learning while held.
                         const auto smoothedAnchor=presentAnchorFor(out.batch.b100ns);
                         const auto presentAnchor=fgHeld?liveInputReady:smoothedAnchor;
-                        liveGeneratedGrace=liveGeneratedGrace100ns(liveInputReady,presentAnchor);
+                        // On the content clock (deduplicated 30-in-60) the anchor sits on one of two sample phases;
+                        // widening the grace by callback-anchor there (18.8 ms at 120 Hz) let frames two refreshes late
+                        // still be shown, and the queue stayed behind for minutes (+14 ms). Keep the plain bound there.
+                        liveGeneratedGrace=smoothContentAnchor?kLiveGeneratedGrace100ns:liveGeneratedGrace100ns(liveInputReady,presentAnchor);
                         liveTimeline.resetPair(out.batch.identity.epoch,out.batch.b100ns,presentAnchor,options.fg&&!fgHeld?pairDelay:0,paceSourcePts);
                         const bool smoothedCapacity=smoothTransportAnchor||smoothContentAnchor;
                         if(smoothedCapacity&&host100ns()>=nextLiveAnchorLog){
