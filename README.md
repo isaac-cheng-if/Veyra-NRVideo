@@ -10,6 +10,8 @@
 
 </div>
 
+> **采集卡的独立仓库（实现介绍、采购清单、从零教程）：[isaac-cheng-if/XCAP](https://github.com/isaac-cheng-if/XCAP)**
+>
 > 本分支 `xcap` 是 [Likely7/Veyra-NRVideo](https://github.com/Likely7/Veyra-NRVideo) 的 fork。仓库根目录仍是 Veyra（GPL-3.0），采集源的改动直接改在原位；采集卡工程（FPGA、固件、驱动、工具）在 [`xcap/`](xcap/)。原项目说明完整保留在本页下半部分。
 
 ## 它做什么
