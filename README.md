@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="xcap/docs/cover.png" alt="XCAP: PS5 capture, RTX frame generation, HDR10, Dolby Atmos" width="720">
+<img src="https://raw.githubusercontent.com/isaac-cheng-if/XCAP/main/docs/cover.png" alt="XCAP: PS5 capture, RTX frame generation, HDR10, Dolby Atmos" width="720">
 
 # Veyra + XCAP：自研 FPGA 采集卡，PS5 画面在 PC 上补帧
 
@@ -12,7 +12,7 @@
 
 > **采集卡的独立仓库（实现介绍、采购清单、从零教程）：[isaac-cheng-if/XCAP](https://github.com/isaac-cheng-if/XCAP)**
 >
-> 本分支 `xcap` 是 [Likely7/Veyra-NRVideo](https://github.com/Likely7/Veyra-NRVideo) 的 fork。仓库根目录仍是 Veyra（GPL-3.0），采集源的改动直接改在原位；采集卡工程（FPGA、固件、驱动、工具）在 [`xcap/`](xcap/)。原项目说明完整保留在本页下半部分。
+> 本分支 `xcap` 是 [Likely7/Veyra-NRVideo](https://github.com/Likely7/Veyra-NRVideo) 的 fork，只含 Veyra 本身（GPL-3.0）：XCAP 采集源的改动直接改在原位，接收库拷贝在 [`third_party/xcap/`](third_party/xcap/)。采集卡工程（FPGA、固件、驱动、工具）已拆分到 [XCAP 仓库](https://github.com/isaac-cheng-if/XCAP)，以 PolyForm Noncommercial 发布。原项目说明完整保留在本页下半部分。
 
 ## 它做什么
 
@@ -39,7 +39,7 @@ flowchart LR
 
 - 采集：4K60 v210，长时间 0 丢帧、0 CRC 错误；HDR10 元数据逐帧随画面送达。
 - 声音：7.1 PCM；Dolby Atmos（MAT/TrueHD、E-AC-3 JOC）独占直通，延迟跟随画面。
-- 30 fps 内容必须等下一帧到达才能插帧，约 25 ms 是这种方法固有的；表中的波动来自 Veyra 的呈现节奏，见 [`xcap/README.md`](xcap/README.md)。
+- 30 fps 内容必须等下一帧到达才能插帧，约 25 ms 是这种方法固有的；表中的波动来自 Veyra 的呈现节奏，见 [XCAP 开发说明](https://github.com/isaac-cheng-if/XCAP/blob/main/docs/DEVELOPMENT.md)。
 - 数字是作者这套设备上的测量，不同电视、游戏会不同。
 
 ## 硬件
@@ -53,16 +53,18 @@ flowchart LR
 
 ## 上手步骤
 
-1. 用自己的 AMD HDMI 1.4/2.0 Subsystem 授权生成位流：`xcap/fpga/build/build_hdmi.tcl rk_fh1159`，写入板上 QSPI（`xcap/fpga/build/qspi.tcl`）。仓库不含位流。
-2. 编译并签名驱动（`xcap/driver/build.bat`、`sign.bat`，证书需自建），安装后用 `xcap_test info` / `xcap_test hdmi` 检查。
+1. 在 [XCAP 仓库](https://github.com/isaac-cheng-if/XCAP) 用自己的 AMD HDMI 1.4/2.0 Subsystem 授权生成位流：`fpga/build/build_hdmi.tcl rk_fh1159`，写入板上 QSPI（`fpga/build/qspi.tcl`）。仓库不含位流。
+2. 编译并签名驱动（XCAP 仓库 `driver/build.bat`、`sign.bat`，证书需自建），安装后用 `xcap_test info` / `xcap_test hdmi` 检查。
 3. PS5：关闭 HDCP（设置 → 系统 → HDMI），HDR 设为始终开启。
 4. 按 Veyra 原说明编译本分支，运行 `veyra_qml_ui.exe --xcap hdmi,120,2 --fullscreen`（目标 120 fps，VFG 质量 2）。
 
-详细说明、寄存器与数据格式、测试命令：[`xcap/README.md`](xcap/README.md)；完整部署记录：[`xcap/到货步骤.md`](xcap/到货步骤.md)。
+详细说明、寄存器与数据格式、测试命令：[XCAP 开发说明](https://github.com/isaac-cheng-if/XCAP/blob/main/docs/DEVELOPMENT.md)；从零教程：[TUTORIAL](https://github.com/isaac-cheng-if/XCAP/blob/main/docs/TUTORIAL.md)。
 
 ## 许可
 
-Veyra 及本分支对它的修改为 GPL-3.0。`xcap/` 下的代码随本仓库以 GPL-3.0 发布；第三方文件的来源见各目录说明（如 [`xcap/fpga/hdmi/fw/THIRD_PARTY.md`](xcap/fpga/hdmi/fw/THIRD_PARTY.md)）。
+Veyra 及本分支对它的修改（含 `third_party/xcap/` 接收库拷贝）沿用 Veyra 的 GPL-3.0。
+
+采集卡工程（FPGA RTL、块设计与约束、MicroBlaze 固件、Windows 驱动、工具）在 [XCAP 仓库](https://github.com/isaac-cheng-if/XCAP)，以 [PolyForm Noncommercial 1.0.0](https://github.com/isaac-cheng-if/XCAP/blob/main/LICENSING.md) 发布，禁止商用，不随本仓库分发。
 
 ---
 
