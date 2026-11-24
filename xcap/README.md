@@ -8,7 +8,7 @@
 | `fpga/hdmi` | HDMI 接收：块设计 `bd.tcl`、两种 FMC 卡的引脚约束、EDID 生成器、MicroBlaze 固件 `fw/` |
 | `driver/` | Windows KMDF 驱动（10EE:A15C） |
 | `host/` | C++ 接收库 `xcap.*` 和 `xcap_test` |
-| `veyra/` | Veyra 的编译脚本；对 Veyra 本身的改动直接在本分支（仓库根目录），基于 main `c6633121` |
+| `veyra/` | Veyra 的编译脚本；对 Veyra 本身的改动直接在本分支（仓库根目录），基于 main `bc59d45`（Veyra 2.2.1） |
 | `tools/deploy_driver.sh` | 编译 + 签名 + 拷到测试机 |
 | `tools/load_fpga.sh` | 下载位流 + 热重启测试机 |
 
@@ -32,7 +32,7 @@ PS5 必须关闭 HDCP（设置 → 系统 → HDMI），否则约每 1.8 秒断�
 `xcap_test hdmi` 显示固件状态和当前信号。Veyra 设备列表里有 “XCAP HDMI 采集卡” 和 “XCAP 测试图案 4K60” 两项。
 
 ## Veyra
-5090 主机 `C:\dev\veyra-xcap\xcap_play.exe` 一键启动（官方 2.2.0 的运行库 + 我们编译的程序，数据目录独立）。`veyra/build_full.bat` 编完整界面，`veyra/build_probe.bat` 只编采集部分。
+基于上游 Veyra 2.2.1（main `bc59d45`）。5090 主机 `C:\dev\veyra-xcap-221\Veyra_XCAP.cmd` 一键启动（`--xcap hdmi,120,2 --fullscreen`：等 PS5 信号、VFG 高质量、目标 120 fps、全屏，数据目录独立）。`veyra/build_full.bat` 编完整界面（源码 `C:\dev\veyra221`，构建 `C:\dev\veyra221-full`），`veyra/deploy.cmd` 以上一版部署目录为底换上新程序、QML、着色器并用 windeployqt 补齐 Qt 模块，`veyra/build_probe.bat` 只编采集部分。
 
 ## 音频与 HDR（hw 00030100、驱动 1.2.0.0、接口 00020000）
 音频走第二个 C2H 通道：2048 字节定长包（头 'XCAU'、序号、时间戳，最多 508 个字），满包或约 0.8 ms 发一次，与视频互不阻塞。
@@ -54,7 +54,7 @@ HDMI OUT 默认原样重复 HDMI IN：画面、HDR/AVI/音频信息帧、音频�
 硬件：`fpga/rtl/xcap_ptlink.sv`（视频弹性 FIFO，满则丢一帧、不反压采集；音频 FIFO），`bd.tcl` 里 v_tpg 开直通输入。BRAM 已用 91%。
 
 ## 本分支的组织方式
-- 仓库根目录是 Veyra（GPL-3.0）。XCAP 采集源的改动直接改在原位：`src/source/Xcap*`、`src/source/NativeDrivers.cpp`、`include/veyra/source/Xcap*`、`include/veyra/sink/ExclusivePassthrough.h`、`tests/integration/Xcap*`，以及 CaptureCardSource、CaptureAudioSession、WasapiAudioSink、界面桥接等处的少量修改。和上游的差异：`git diff c663312..xcap -- . ':!xcap'`。
+- 仓库根目录是 Veyra（GPL-3.0）。XCAP 采集源的改动直接改在原位：`src/source/Xcap*`、`src/source/NativeDrivers.cpp`、`include/veyra/source/Xcap*`、`include/veyra/sink/ExclusivePassthrough.h`、`tests/integration/Xcap*`，以及 CaptureCardSource、CaptureAudioSession、WasapiAudioSink、界面桥接等处的少量修改。和上游的差异：`git diff bc59d45 xcap -- . ':!xcap'`（2.2.1 起；2.2.0 时期为 `c663312`）。
 - `third_party/xcap/` 是 `xcap/host` 与 `xcap/common` 中接收库和头文件的拷贝，供 Veyra 编译；改动以 `xcap/` 为准，再同步过去。
 - `xcap/` 是采集卡工程本身：FPGA（RTL、块设计、约束、MicroBlaze 固件）、Windows 驱动、主机库与工具、自检工程、文档。
 
